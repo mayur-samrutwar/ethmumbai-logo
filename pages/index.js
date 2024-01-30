@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SketchPicker } from "react-color";
+import { saveSvgAsPng } from 'save-svg-as-png';
 
 function App() {
   const [selectedElement, setSelectedElement] = useState(null);
@@ -52,6 +53,28 @@ function App() {
     return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
   };
 
+
+
+  const svgRef = useRef();
+
+  const downloadSvg = () => {
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgRef.current);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'eth-mumbai.svg';
+    link.click();
+  };
+
+  const downloadPng = () => {
+    saveSvgAsPng(svgRef.current, 'eth-mumbai.png');
+  };
+
+
+
+
   // Close color picker when clicking outside of it
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -91,6 +114,7 @@ Random Color
             viewBox="0 0 2400 2400"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            ref={svgRef}
           >
             <rect
               width="2300"
@@ -144,14 +168,14 @@ Random Color
           <div className="flex space-x-4">
             <button
               class="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
-              onClick={randomize}
+              onClick={downloadSvg}
             >
               <span class="relative text-white text-sm">SVG</span>
             </button>
 
             <button
               class="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
-              onClick={randomize}
+              onClick={downloadPng}
             >
               <span class="relative text-white text-sm">PNG</span>
             </button>
