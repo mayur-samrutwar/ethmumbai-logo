@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SketchPicker } from "react-color";
-import { saveSvgAsPng } from 'save-svg-as-png';
+import { saveSvgAsPng } from "save-svg-as-png";
+import { extractColors } from 'extract-colors'
 
 function App() {
   const [selectedElement, setSelectedElement] = useState(null);
@@ -11,6 +12,8 @@ function App() {
   const [svgBackground, setSvgBackground] = useState("white");
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const colorPickerRef = useRef();
+  const svgRef = useRef();
+
 
   const handleElementClick = (element) => {
     setSelectedElement(element);
@@ -53,27 +56,58 @@ function App() {
     return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
   };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageDataUrl = e.target.result;
+        setSvgBackground(imageDataUrl); // You can set the background directly, or use it in the SVG as an image
+        generatePaletteFromImage(imageDataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
+  const generatePaletteFromImage = (imageDataUrl) => {
+    // Create an image element to load the image
+    const img = new Image();
+    img.crossOrigin = "Anonymous"; // Enable cross-origin access if needed
+    img.src = imageDataUrl;
 
-  const svgRef = useRef();
+ 
+  
+
+    // Set an onload event to ensure the image is fully loaded before extracting colors
+    img.onload = () => {
+      const palette = extractColors(img.src).then((res)=>{
+        console.log(res)
+       if(res[0]) setSvgBackground(res[0].hex)
+       if(res[1]) setUpperStroke(res[1].hex)
+       if(res[2]) setLowerStroke(res[2].hex)
+       if(res[3]) setUpperFill(res[3].hex)
+       if(res[4])  setLowerFill(res[4].hex)}
+      )
+      
+      // Apply colors to stroke, fill, and background
+      
+    };
+  };
 
   const downloadSvg = () => {
     const serializer = new XMLSerializer();
     const source = serializer.serializeToString(svgRef.current);
-    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = 'eth-mumbai.svg';
+    link.download = "eth-mumbai.svg";
     link.click();
   };
 
   const downloadPng = () => {
-    saveSvgAsPng(svgRef.current, 'eth-mumbai.png');
+    saveSvgAsPng(svgRef.current, "eth-mumbai.png");
   };
-
-
-
 
   // Close color picker when clicking outside of it
   useEffect(() => {
@@ -96,17 +130,41 @@ function App() {
   return (
     <div className="min-h-screen w-full flex justify-center items-center bg-gray-100">
       <div className="flex flex-col items-center">
-      <div className="flex space-x-2 mb-4">
-      <button type="button" onClick={randomize} class="text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 me-2 mb-2">
-Random Color
-</button>
-<button type="button" class="flex items-center text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 me-2 mb-2">
-<svg class="mr-2 w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v9m-5 0H5a1 1 0 0 0-1 1v4c0 .6.4 1 1 1h14c.6 0 1-.4 1-1v-4c0-.6-.4-1-1-1h-2M8 9l4-5 4 5m1 8h0"/>
-  </svg>
-  Generate Pallete from Image
-</button>
-          </div>
+        <div className="flex space-x-2 mb-4">
+          <button
+            type="button"
+            onClick={randomize}
+            className="text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 me-2 mb-2"
+          >
+            Random Color
+          </button>
+          <label
+            type="button"
+            className="flex items-center text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 me-2 mb-2"
+          >
+            <svg
+              className="mr-2 w-6 h-6 text-gray-800 dark:text-white"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 5v9m-5 0H5a1 1 0 0 0-1 1v4c0 .6.4 1 1 1h14c.6 0 1-.4 1-1v-4c0-.6-.4-1-1-1h-2M8 9l4-5 4 5m1 8h0"
+              />
+            </svg>
+            Generate Palette from Image
+            <input
+              type="file"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </label>
+        </div>
         <div className="w-96 h-96 bg-white shadow-sm border border-gray-200 relative">
           <svg
             width="400"
@@ -160,24 +218,21 @@ Random Color
           </svg>
         </div>
         <div className="flex flex-col">
-          
-
           <span className="my-4 text-center text-sm text-gray-700">
             Download Image as:
           </span>
           <div className="flex space-x-4">
             <button
-              class="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
+              className="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
               onClick={downloadSvg}
             >
-              <span class="relative text-white text-sm">SVG</span>
+              <span className="relative text-white text-sm">SVG</span>
             </button>
-
             <button
-              class="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
+              className="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-pink-500 relative inline-block px-8 py-2 border-4 border-black"
               onClick={downloadPng}
             >
-              <span class="relative text-white text-sm">PNG</span>
+              <span className="relative text-white text-sm">PNG</span>
             </button>
           </div>
         </div>
